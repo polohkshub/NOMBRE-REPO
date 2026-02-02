@@ -268,4 +268,42 @@ body {
   .card {
     padding: 2rem;
   }
+  /* Fuerza 2 columnas en categorías siempre (incluso en celulares angostos) */
+.categories-grid {
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 12px !important;
+  min-width: 0;
+}
+
+@media (max-width: 380px) {
+  .categories-grid {
+    grid-template-columns: 1fr !important; /* solo si es muy chiquito */
+  }
+}
+
+/* Centrado fuerte en todo */
+.app-wrapper, .main-content, .card {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding: 0 12px !important;
+}
+
+.expense-item {
+  padding: 12px 16px !important;
+  margin: 0 auto !important;
+}
+
+/* Total más destacado para que se note el cambio */
+.total-highlight {
+  background: #e0f2fe !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  text-align: center !important;
+}
+
+.total-value {
+  font-size: 2.8rem !important;
+  font-weight: bold !important;
+  color: #1d4ed8 !important;
+}
 }
