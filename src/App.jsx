@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 
-const CATEGORIES = ["casa", "personal", "auto", "comida", "eventuales", "lolo"];
+const CATEGORIES = ["casa", "personal", "ocio", "comida", "eventuales", "lolo"];
 const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -15,7 +15,6 @@ const formatARS = (n) =>
 function exportResumenXLSX({ from, to, filtered, totalsByCat, total }) {
   const wb = XLSX.utils.book_new();
 
-  // Hoja 1: Resumen
   const resumenData = [
     ["RESUMEN DE GASTOS"],
     ["Desde", from],
@@ -29,7 +28,6 @@ function exportResumenXLSX({ from, to, filtered, totalsByCat, total }) {
   const wsResumen = XLSX.utils.aoa_to_sheet(resumenData);
   XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen");
 
-  // Hoja 2: Detalle
   const detalle = filtered
     .slice()
     .sort((a, b) => (a.date > b.date ? 1 : -1))
@@ -50,17 +48,14 @@ export default function App() {
   const [items, setItems] = useState([]);
   const [savedMonths, setSavedMonths] = useState({});
 
-  // formulario
   const [amount, setAmount] = useState("");
   const [desc, setDesc] = useState("");
   const [cat, setCat] = useState("comida");
   const [date, setDate] = useState(todayISO());
 
-  // filtros
   const [from, setFrom] = useState(todayISO());
   const [to, setTo] = useState(todayISO());
 
-  // cargar
   useEffect(() => {
     const raw = localStorage.getItem("gastos_items_v1");
     const rawMonths = localStorage.getItem("gastos_months_v1");
@@ -68,7 +63,6 @@ export default function App() {
     if (rawMonths) setSavedMonths(JSON.parse(rawMonths));
   }, []);
 
-  // guardar
   useEffect(() => {
     localStorage.setItem("gastos_items_v1", JSON.stringify(items));
   }, [items]);
@@ -138,63 +132,54 @@ export default function App() {
   }
 
   function clearAll() {
-    if (!confirm("¿Borrar TODOS los gastos?")) return;
+    if (!confirm("¿Borrar TODOS los gastos? Esto es irreversible.")) return;
     setItems([]);
   }
 
   function exportResumen() {
-    exportResumenXLSX({
-      from,
-      to,
-      filtered,
-      totalsByCat,
-      total,
-    });
-  }
-
-  function guardar() {
-    saveMonthSnapshot();
+    exportResumenXLSX({ from, to, filtered, totalsByCat, total });
   }
 
   return (
-    <div className="app">
-      <header className="top">
-        <div className="brand">
-          <div className="logo">💙</div>
-          <div>
-            <h1>CONTROL DE GASTOS</h1>
-            <p>simple, rápido y pensado para celular</p>
-          </div>
+    <div className="app-container">
+      <header className="header">
+        <div className="logo">💙</div>
+        <div className="title-group">
+          <h1>Control de Gastos</h1>
+          <p>simple • rápido • para celular</p>
         </div>
       </header>
 
-      <main className="grid">
-        <section className="card">
+      <main className="main-content">
+        {/* Ingresar gasto */}
+        <section className="card ingresar">
           <h2>➕ Ingresar gasto</h2>
+          <div className="form-grid">
+            <div className="form-row">
+              <label>
+                Monto
+                <input
+                  type="number"
+                  placeholder="1500"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
+              </label>
+            </div>
 
-          <div className="form">
-            <label>
-              Monto
-              <input
-                type="number"
-                inputMode="numeric"
-                placeholder="Ej: 1500"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
-            </label>
+            <div className="form-row">
+              <label>
+                Descripción
+                <input
+                  type="text"
+                  placeholder="supermercado"
+                  value={desc}
+                  onChange={(e) => setDesc(e.target.value)}
+                />
+              </label>
+            </div>
 
-            <label>
-              Descripción
-              <input
-                type="text"
-                placeholder="Ej: supermercado"
-                value={desc}
-                onChange={(e) => setDesc(e.target.value)}
-              />
-            </label>
-
-            <div className="row2">
+            <div className="form-row double">
               <label>
                 Categoría
                 <select value={cat} onChange={(e) => setCat(e.target.value)}>
@@ -212,20 +197,23 @@ export default function App() {
               </label>
             </div>
 
-            <button className="btn primary" onClick={addExpense}>
+            <button className="btn primary full" onClick={addExpense}>
               Guardar gasto
             </button>
           </div>
 
-          <button className="btn danger" onClick={clearAll} style={{ marginTop: 10 }}>
-            Borrar todo
-          </button>
+          <div className="small-actions">
+            <button className="btn danger small" onClick={clearAll}>
+              Borrar todo
+            </button>
+          </div>
         </section>
 
-        <section className="card">
-          <h2>📅 Resumen</h2>
+        {/* Resumen */}
+        <section className="card resumen">
+          <h2>📊 Resumen</h2>
 
-          <div className="row2">
+          <div className="date-range">
             <label>
               Desde
               <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
@@ -236,50 +224,46 @@ export default function App() {
             </label>
           </div>
 
-          <div className="summary">
-            <div className="big">
-              Total: <span>{formatARS(total)}</span>
-            </div>
-
-            <div className="cats">
-              {CATEGORIES.map((c) => (
-                <div key={c} className="pill">
-                  <div className="pillTitle">{c.toUpperCase()}</div>
-                  <div className="pillValue">{formatARS(totalsByCat[c])}</div>
-                </div>
-              ))}
-            </div>
+          <div className="total-box">
+            <span className="total-label">Total</span>
+            <span className="total-amount">{formatARS(total)}</span>
           </div>
 
-          {/* EXPORTAR debajo del resumen */}
-          <div className="actionsOne" style={{ marginTop: 12 }}>
-            <button className="btn" onClick={exportResumen}>
-              Exportar resumen a Excel (.xlsx)
-            </button>
+          <div className="categories-grid">
+            {CATEGORIES.map((c) => (
+              <div key={c} className={`cat-pill ${totalsByCat[c] > 0 ? "active" : ""}`}>
+                <div className="cat-name">{c.toUpperCase()}</div>
+                <div className="cat-value">{formatARS(totalsByCat[c])}</div>
+              </div>
+            ))}
           </div>
+
+          <button className="btn secondary full" onClick={exportResumen}>
+            Exportar a Excel (.xlsx)
+          </button>
         </section>
 
-        <section className="card full">
-          <h2>🧾 Gastos (rango seleccionado)</h2>
+        {/* Lista de gastos */}
+        <section className="card lista">
+          <h2>🧾 Gastos ({from} → {to})</h2>
 
           {filtered.length === 0 ? (
-            <div className="empty">No hay gastos en ese rango 🙂</div>
+            <div className="empty-state">No hay gastos en este rango 💙</div>
           ) : (
-            <div className="list">
+            <div className="expenses-grid">
               {filtered
                 .slice()
                 .sort((a, b) => (a.date < b.date ? 1 : -1))
                 .map((it) => (
-                  <div key={it.id} className="item">
-                    <div className="left">
-                      <div className="date">{it.date}</div>
-                      <div className="desc">{it.desc || "—"}</div>
-                      <div className="cat">{it.category.toUpperCase()}</div>
+                  <div key={it.id} className="expense-item">
+                    <div className="expense-left">
+                      <div className="exp-date">{it.date}</div>
+                      <div className="exp-desc">{it.desc || "—"}</div>
+                      <div className="exp-cat">{it.category.toUpperCase()}</div>
                     </div>
-
-                    <div className="right">
-                      <div className="amt">{formatARS(it.amount)}</div>
-                      <button className="mini" onClick={() => removeExpense(it.id)}>
+                    <div className="expense-right">
+                      <div className="exp-amount">{formatARS(it.amount)}</div>
+                      <button className="delete-btn" onClick={() => removeExpense(it.id)}>
                         🗑
                       </button>
                     </div>
@@ -288,17 +272,22 @@ export default function App() {
             </div>
           )}
 
-          {/* UN SOLO BOTÓN AL FINAL */}
-          <div style={{ marginTop: 12 }} className="actionsOne">
-            <button className="btn primary" onClick={guardar}>
-              GUARDAR
+          <div className="actions-bottom">
+            <button className="btn primary" onClick={saveMonthSnapshot}>
+              GUARDAR MES
             </button>
-            <button className="btn" onClick={loadMonthSnapshot}>
-              Cargar mes
+            <button className="btn secondary" onClick={loadMonthSnapshot}>
+              CARGAR MES
             </button>
           </div>
 
-          <div className="footerNote">Hecho para vos 💙</div>
+          <div className="final-danger">
+            <button className="btn danger outline" onClick={clearAll}>
+              Borrar TODOS los gastos
+            </button>
+          </div>
+
+          <div className="footer-love">Hecho con amor para Lore 💙✨</div>
         </section>
       </main>
     </div>
